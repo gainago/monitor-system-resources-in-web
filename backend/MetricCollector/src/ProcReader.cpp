@@ -181,7 +181,6 @@ ProcessInfo ProcReader::readProcessInfo(int pid) {
     std::string stat_line;
     std::getline(stat_file, stat_line);
     // Парсинг stat: сложная строка из-за comm в скобках
-    // Найдём позицию '(' и ')'
     auto open_br = stat_line.find('(');
     auto close_br = stat_line.rfind(')');
     if (open_br == std::string::npos || close_br == std::string::npos) return info;
@@ -191,20 +190,18 @@ ProcessInfo ProcReader::readProcessInfo(int pid) {
 
     // Всё после ')' — оставшиеся поля, начинающиеся с state
     std::istringstream rest(stat_line.substr(close_br + 2));
-    // Поля: state ppid pgrp session tty_nr tpgid flags minflt cminflt majflt cmajflt
-    //       utime stime cutime cstime priority nice num_threads itrealvalue starttime vsize rss ...
     char state;
     rest >> state;
     info.state = state;
 
     long long dummy;
-    // пропускаем 9 полей (ppid...cmajflt) — всего их 11 после state, но проще считать индексы
-    for (int i = 0; i < 10; ++i) rest >> dummy; // ppid..cmajflt
+    // пропускаем 10 полей: ppid..cmajflt
+    for (int i = 0; i < 10; ++i) rest >> dummy;
 
     unsigned long long utime, stime;
     rest >> utime >> stime;
 
-    // cutime, cstime пропускаем (2 поля)
+    // cutime, cstime
     rest >> dummy >> dummy;
 
     long priority, nice_val;
@@ -212,14 +209,14 @@ ProcessInfo ProcReader::readProcessInfo(int pid) {
     info.priority = priority;
     info.nice = nice_val;
 
-    // num_threads, itrealvalue пропускаем
+    // num_threads, itrealvalue
     rest >> dummy >> dummy;
 
     unsigned long long starttime, vsize, rss;
     rest >> starttime >> vsize >> rss;
 
     long page_size_kb = sysconf(_SC_PAGESIZE) / 1024;
-    info.virt_kb = vsize / 1024;  // vsize в байтах -> КБ
+    info.virt_kb = vsize / 1024;
     info.res_kb = rss * page_size_kb;
     info.time_ticks = utime + stime;
 
@@ -230,7 +227,6 @@ ProcessInfo ProcReader::readProcessInfo(int pid) {
         std::string line;
         while (std::getline(status_file, line)) {
             if (line.rfind("Uid:", 0) == 0) {
-                // Uid:   real   effective   saved   filesystem
                 std::istringstream iss(line);
                 std::string label;
                 unsigned int uid_real;
@@ -241,31 +237,56 @@ ProcessInfo ProcReader::readProcessInfo(int pid) {
                 std::string label;
                 unsigned long long val_kb;
                 iss >> label >> val_kb;
-                info.shr_kb = val_kb; // в status уже в КБ
+                info.shr_kb = val_kb;
             }
         }
     }
 
-    // Читаем cmdline для command
+    // ---------- Улучшенное определение команды ----------
+    std::string command;
     std::string cmdline_path = "/proc/" + std::to_string(pid) + "/cmdline";
     std::ifstream cmdline_file(cmdline_path);
     if (cmdline_file) {
-        std::string cmdline;
-        std::getline(cmdline_file, cmdline, '\0'); // читаем до нуля, но лучше весь файл
-        // Заменим нулевые байты на пробелы
-        std::string command_str;
-        for (char c : cmdline) {
-            if (c == '\0') command_str += ' ';
-            else command_str += c;
+        // Берём только первый аргумент (до '\0')
+        std::string first_arg;
+        std::getline(cmdline_file, first_arg, '\0');
+        // Используем, если он не похож на /proc/self/...
+        if (!first_arg.empty() &&
+            first_arg != "/proc/self/exe" &&
+            first_arg.rfind("/proc/", 0) != 0) {
+            command = first_arg;
         }
-        if (!command_str.empty()) {
-            info.command = command_str;
-        } else {
-            info.command = comm; // fallback к comm из stat
-        }
-    } else {
-        info.command = comm;
     }
+
+    // Fallback 1: симлинк /proc/pid/exe → basename
+    if (command.empty()) {
+        std::string exe_link = "/proc/" + std::to_string(pid) + "/exe";
+        char buf[PATH_MAX];
+        ssize_t len = readlink(exe_link.c_str(), buf, sizeof(buf) - 1);
+        if (len != -1) {
+            buf[len] = '\0';
+            std::string fullpath(buf);
+            auto slash = fullpath.find_last_of('/');
+            if (slash != std::string::npos) {
+                command = fullpath.substr(slash + 1);
+            } else {
+                command = fullpath;
+            }
+        }
+    }
+
+    // Fallback 2: comm из /proc/pid/stat
+    if (command.empty()) {
+        command = comm;
+    }
+
+    // Обрезаем слишком длинные команды (опционально)
+    const size_t MAX_COMMAND_LEN = 100;
+    if (command.size() > MAX_COMMAND_LEN) {
+        command = command.substr(0, MAX_COMMAND_LEN) + "...";
+    }
+
+    info.command = command;
 
     return info;
 }
