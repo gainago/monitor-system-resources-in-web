@@ -3,7 +3,7 @@ project(sysmon_metrics_test)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -O2")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -O0 -g")
 
 include_directories(
     ${CMAKE_SOURCE_DIR}/MetricCollector/include
@@ -26,6 +26,7 @@ add_executable(test_metrics
     ${PATH_TO_METRIC_COLLECTOR}/src/MetricsCollector.cpp
     ${PATH_TO_METRIC_COLLECTOR}/src/CpuUsageCalculator.cpp
     ${PATH_TO_METRIC_COLLECTOR}/src/ProcessCollector.cpp
-    ${PATH_TO_METRIC_CONVERTER}/src/MetricsConverter.cpp
+    ${PATH_TO_METRIC_CONVERTER}/src/FrontendTableBuilder.cpp
+    ${PATH_TO_METRIC_CONVERTER}/src/MetricsSorter.cpp
 )
 target_link_libraries(test_metrics pthread)
