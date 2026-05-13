@@ -11,7 +11,9 @@
 
 # Инструкции по сборке.
 cd build
+
 cmake ../backend/CMakeLists.txt
+
 make
 
 # Запуск сервера.
