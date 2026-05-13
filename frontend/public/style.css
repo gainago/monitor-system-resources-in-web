@@ -1,0 +1,36 @@
+body {
+    font-family: 'Courier New', monospace;
+    background: #1e1e1e;
+    color: #dcdcdc;
+    margin: 10px;
+}
+h1 {
+    color: #61afef;
+}
+#sysinfo {
+    margin-bottom: 10px;
+    font-size: 1.2em;
+}
+table {
+    border-collapse: collapse;
+    width: 100%;
+}
+th, td {
+    padding: 2px 8px;
+    text-align: right;
+    white-space: nowrap;
+}
+th {
+    background: #333;
+    color: #e5c07b;
+    cursor: pointer;
+}
+td {
+    border-bottom: 1px solid #444;
+}
+td:last-child {
+    text-align: left;
+    max-width: 400px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
