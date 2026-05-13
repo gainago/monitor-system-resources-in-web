@@ -34,4 +34,4 @@ add_executable(${PROJECT_NAME}
     ${PATH_TO_METRIC_CONVERTER}/src/MetricsSorter.cpp
     ${PATH_TO_SERVER}/src/Server.cpp
 )
-#target_link_libraries(${PROJECT_NAME} pthread) // нужно для 
+target_link_libraries(${PROJECT_NAME} pthread)

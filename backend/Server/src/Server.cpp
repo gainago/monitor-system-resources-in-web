@@ -25,7 +25,7 @@ int startServer() {
     MetricsCollector collector(std::move(reader), cores);
 
     // ---------- HTTP-сервер ----------
-    httplib::Server svr;
+    httplib::Server svr; // По умолчанию услопльзует множество потоков.
 
     svr.Get("/", [](const httplib::Request&, httplib::Response& res) {
         std::string content = readFile("../frontend/public/index.html");

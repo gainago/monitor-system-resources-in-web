@@ -7,6 +7,7 @@
 #include "FullSystemSnapshot.h"
 #include <memory>
 #include <chrono>
+#include <mutex>
 
 namespace sysmon {
 
@@ -22,6 +23,7 @@ public:
     FullSystemSnapshot collect();
 
 private:
+    std::mutex mutex_;
     std::shared_ptr<IProcReader> reader_; // shared, т.к. ProcessCollector тоже его использует
     unsigned int cpu_core_count_;
     std::unique_ptr<ProcessCollector> process_collector_;

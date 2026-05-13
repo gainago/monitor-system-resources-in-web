@@ -12,6 +12,9 @@ MetricsCollector::MetricsCollector(std::unique_ptr<IProcReader> reader, unsigned
 }
 
 FullSystemSnapshot MetricsCollector::collect() {
+
+    std::lock_guard<std::mutex> lock(mutex_);
+    
     using namespace std::chrono;
     auto now = steady_clock::now();
     if (first_call_) {
