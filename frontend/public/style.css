@@ -23,7 +23,6 @@ th, td {
 th {
     background: #333;
     color: #e5c07b;
-    cursor: pointer;
 }
 td {
     border-bottom: 1px solid #444;

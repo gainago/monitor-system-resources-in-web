@@ -10,6 +10,7 @@
 **Frontend** HTML CSS TypeScript. Ничего компилировать не нужно, ваш браузер исполнит main.js.
 
 # Инструкции по сборке.
+mkdir build
 cd build
 
 cmake ../backend/CMakeLists.txt
