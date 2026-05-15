@@ -11,6 +11,7 @@
 
 # Инструкции по сборке.
 mkdir build
+
 cd build
 
 cmake ../backend/CMakeLists.txt
